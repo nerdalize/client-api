@@ -1,0 +1,23 @@
+{
+  "name": "client-api",
+  "version": "0.0.1",
+  "description": "WIP: Creating a flexible model-resource discovering api",
+  "main": "src/index.js",
+  "author": "Dexter",
+  "license": "MIT",
+  "scripts": {
+    "develop": "nodemon use.js --exec babel-node"
+  },
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "node-fetch": "^1.7.3",
+    "url-join": "^2.0.2",
+    "url-parse": "^1.2.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "nodemon": "^1.12.1"
+  }
+}
