@@ -1,6 +1,11 @@
 
 class Endpoint {
-  constructor (api, path) {
+  constructor (api, options = {}) {
+    this.api = api
+    this.options = options
+  }
+
+  call (options) {
 
   }
 

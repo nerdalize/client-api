@@ -1,9 +1,7 @@
 import _ from 'lodash'
 
 import Resource from './resource'
-
-const ACCESS_TOKEN = 'fPGWFPjYv095Vj1o8XXAZ48CCUmIqv'
-
+import Model from './model'
 
 const METHOD_MAP = {
   'get': 'read',
@@ -47,48 +45,79 @@ function extractResources(api, paths) {
     },
     {}
   )
-  console.log("Resources:", resources)
+
+  api.resources = _.fromPairs(
+    _.map(resources, (endpoints, name) => [name, constructResource(api, name, endpoints)])
+  )
 }
 
-// function handleSuccess (data) {
-//   // console.log("Received swagger spec:", data)
+const standardOperations = [
+  // Resource operations
+  /* post   */ 'create',
+  /* get    */ 'list',
 
-//   // Load resources from the paths object
-//   const paths = data.paths
+  // Instance operations
+  /* delete */ 'delete',
+  /* patch  */ 'partial_update',
+  /* get    */ 'read',
+  /* put    */ 'update',
+]
 
+function constructResource(api, name, endpoints) {
+  const operationRe = new RegExp(`^${name}_(.+)$`)
+  const instanceRe = new RegExp('\{(.+?)\}')
 
-//   /*
-//     resource -> endpoint -> methods
-//     resource -> method(endpoint)
-//   */
+  class ResourceModel extends Model {}
+  const resource = new Resource(api, ResourceModel)
 
-//   // _.forEach(resources, (endpoints, resource) => {
-//   //   _.forEach(endpoints, (endpoint) => {
-//   //     // _.forEach(methods, (description, method) => {
-//   //       console.log('::',
-//   //         resource, endpoint
-//   //       )
-//   //         // , method, description.operationId)
+  // console.log("*************************************")
+  console.log("Parsing:", name)
 
-//   //     // })
-      
-//   //   })
-//   // })
+  // Extract the endpoints and construct the calls to create the resource.
+  _.map(endpoints, endpoint => {
+    const idMatch = endpoint.endpoint.match(instanceRe)
+    let instanceId
 
-//   // console.log('keys', JSON.stringify(endpoints, null, 2))
-//   // console.log('keys', endpoints)
-//   // console.log('users', endpoints.users.endpoints)
-// }
+    if (idMatch) {
+      instanceId = idMatch[1]
+    }
 
+    _.map(endpoint.methods, (definition, method) => {
+      const [_all, operation, ...__] = definition.operationId.match(operationRe)
 
+      // Determine whether the operation is on instance level or resource level.
+      let s = '\t'
+      if (_.includes(standardOperations, operation)) {
+
+        if (!instanceId) {
+          resource[operation] = ((api) => (options) => api.fetchJSON(null, options) )(api.join(name, { method }))
+        } else {
+          ResourceModel[operation] = ((api) => (options) => api.fetchJSON(null, options) )(api.join(`${name}/${endpoint.endpoint}`, { method }))
+        }
+
+      } else {
+        s += "Custom :"
+      }
+      if (instanceId) {
+        s += 'instance::'+instanceId
+      } else {
+        s += 'resource'
+      }
+      console.log(s, method, operation)
+    })
+  })
+
+  // console.log("Constructed resource:", name, resource)
+  // console.log("___________________________________________\n", ResourceModel)
+  // console.dir(ResourceModel)
+  // // console.log("Constructed resource:", resource.constructor)
+
+  return resource
+}
 
 export function loadAsync (api, url) {
-  console.log(`Calling url(${url})`, api.base)
-  api.fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${ACCESS_TOKEN}`
-    }
-  })
+
+  api.loading = api.fetch(url)
     .then(resp => {
       // TODO: Content-Type checking
       if (resp.ok) {
@@ -99,6 +128,7 @@ export function loadAsync (api, url) {
       }
     })
     .then(data => {
+      api.loading.resolve
       extractResources(api, data.paths)
     })
     .catch(handleError)
