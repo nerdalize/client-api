@@ -1,6 +1,6 @@
 {
   "name": "client-api",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "WIP: Creating a flexible model-resource discovering api",
   "main": "src/index.js",
   "author": "Dexter",
