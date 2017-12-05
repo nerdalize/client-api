@@ -3,6 +3,7 @@
   "version": "0.0.2",
   "description": "WIP: Creating a flexible model-resource discovering api",
   "jsnext:main": "src/index.js",
+  "main": "src/index.js",
   "author": "dexter@nerdalize.com",
   "license": "MIT",
   "scripts": {
