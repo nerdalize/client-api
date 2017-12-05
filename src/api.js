@@ -1,6 +1,5 @@
 import _ from 'lodash'
 
-import fetch from 'node-fetch'
 import URL from 'url-parse'
 import URLjoin from 'url-join'
 
