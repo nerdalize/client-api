@@ -1,5 +1,7 @@
 
 export default class Resource {
-  constructor () {
+  constructor (model) {
+    this.model = model
   }
 }
+

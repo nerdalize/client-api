@@ -1,9 +1,13 @@
 import _ from 'lodash'
 
+import { observable } from 'mobx'
+
+// import fetch from 'node-fetch'
 import URL from 'url-parse'
 import URLjoin from 'url-join'
 
 import * as swagger from './swagger'
+
 
 class API {
   /*
@@ -17,9 +21,8 @@ class API {
     this.auth_store = auth_store
   }
 
-  toString() {
-    return "API"
-  }
+
+  @observable loaded = false
 
   // Constructs an API from the swagger url,
   // Will expose endpoints as resources, and discover the model definitions
@@ -48,7 +51,7 @@ class API {
       ...opts,
       headers: {
         'Authorization': `Bearer ${this.auth_store.ACCESS_TOKEN}`,
-        ...opts.headers,      
+        ...opts.headers,
       }
     }
     console.log(`fetching ${_.get(opts2, 'method', 'get')}(${url})`)

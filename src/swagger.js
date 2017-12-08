@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { action } from 'mobx'
 
 import Resource from './resource'
 import Model from './model'
@@ -67,14 +68,17 @@ function constructResource(api, name, endpoints) {
   const operationRe = new RegExp(`^${name}_(.+)$`)
   const instanceRe = new RegExp('\{(.+?)\}')
 
-  class ResourceModel extends Model {}
-  const resource = new Resource(api, ResourceModel)
+  class ResourceModel extends Model {
+    static schema = {}
+  }
 
-  // console.log("*************************************")
+  const resource = new Resource(ResourceModel)
+
+  console.log("****************************************************************")
   console.log("Parsing:", name)
 
   // Extract the endpoints and construct the calls to create the resource.
-  _.map(endpoints, endpoint => {
+  _.forEach(endpoints, endpoint => {
     const idMatch = endpoint.endpoint.match(instanceRe)
     let instanceId
 
@@ -82,8 +86,13 @@ function constructResource(api, name, endpoints) {
       instanceId = idMatch[1]
     }
 
-    _.map(endpoint.methods, (definition, method) => {
+    _.forEach(endpoint.methods, (definition, method) => {
       const [_all, operation, ...__] = definition.operationId.match(operationRe)
+
+      const bodyParam = _.find(definition.parameters, param => param.in === 'body')
+      if (bodyParam && ('schema' in bodyParam)) {
+        _.defaultsDeep(ResourceModel.schema, bodyParam.schema)
+      }
 
       // Determine whether the operation is on instance level or resource level.
       let s = '\t'
@@ -92,10 +101,11 @@ function constructResource(api, name, endpoints) {
         if (!instanceId) {
           resource[operation] = ((api) => (options) => api.fetchJSON(null, options) )(api.join(name, { method }))
         } else {
-          ResourceModel[operation] = ((api) => (options) => api.fetchJSON(null, options) )(api.join(`${name}/${endpoint.endpoint}`, { method }))
+          ResourceModel.prototype[operation] = ((api) => (options) => api.fetchJSON(null, options) )(api.join(`${name}/${endpoint.endpoint}`, { method }))
         }
 
       } else {
+        // TODO: Handle custom endpoints.
         s += "Custom :"
       }
       if (instanceId) {
@@ -107,11 +117,7 @@ function constructResource(api, name, endpoints) {
     })
   })
 
-  // console.log("Constructed resource:", name, resource)
-  // console.log("___________________________________________\n", ResourceModel)
-  // console.dir(ResourceModel)
-  // // console.log("Constructed resource:", resource.constructor)
-
+  console.log("Constructed schema:", name, ResourceModel)
   return resource
 }
 
@@ -124,12 +130,12 @@ export function loadAsync (api, url) {
         return resp.json()
       } else {
         throw resp.json()
-        // throw new Error(`Error loading schema ${url}`)
       }
     })
-    .then(data => {
-      api.loading.resolve
+    .then(action('swaggerAsyncLoaded', data => {
       extractResources(api, data.paths)
-    })
+      api.loaded = true
+      console.log('API loaded')
+    }))
     .catch(handleError)
 }

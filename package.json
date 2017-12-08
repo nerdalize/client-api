@@ -2,12 +2,26 @@
   "name": "client-api",
   "version": "0.0.2",
   "description": "WIP: Creating a flexible model-resource discovering api",
-  "jsnext:main": "src/index.js",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "author": "dexter@nerdalize.com",
   "license": "MIT",
   "scripts": {
-    "develop": "nodemon use.js --exec babel-node"
+    "develop": "nodemon use.js --exec babel-node",
+    "start": "npm run dev",
+    "dev": "npm test -- -w",
+    "init": "mkdir dist",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean && npm run init",
+    "build": "babel ./src -d ./dist --ignore test.js",
+    "pretest": "npm run build",
+    "test": "mocha --compilers js:babel-core/register ./src/**/*.test.js",
+    "test:single": "mocha --compilers js:babel-core/register"
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "mobx": "^3.4.0"
   },
   "dependencies": {
     "lodash": "^4.17.4",
@@ -16,8 +30,13 @@
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.1",
+    "chai": "^4.1.2",
+    "mobx": "^3.4.1",
+    "mocha": "^4.0.1",
     "nodemon": "^1.12.1"
   }
 }
